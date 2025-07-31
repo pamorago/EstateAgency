@@ -138,10 +138,8 @@
           <div class="row">
             <div class="col-md-12 col-lg-8">
               <div class="title-single-box">
-                <h1 class="title-single">Our Amazing Properties</h1>
-                <span class="color-text-a"
-                  >Lista de Propiedades Disponibles</span
-                >
+                <h1 class="title-single">Información del Clima</h1>
+                <span class="color-text-a">El Clima en su localidad</span>
               </div>
             </div>
             <div class="col-md-12 col-lg-4">
@@ -154,7 +152,7 @@
                     <a href="#">Home</a>
                   </li>
                   <li class="breadcrumb-item active" aria-current="page">
-                    Properties Grid
+                    Open Wheather
                   </li>
                 </ol>
               </nav>
@@ -167,8 +165,56 @@
       <!-- ======= Property Grid ======= -->
       <section class="property-grid grid">
         <div class="container">
-          <div id="datosPropiedades" class="row">
+          <div id="openweatherid" class="row">
             <!-- ======= Datos de Propiedades ======= -->
+
+            <div id="tiempo">
+              <table
+                id="tblw"
+                class="table table-bordered table-hover table-striped align-middle shadow-sm rounded bg-white"
+                style="max-width: 400px; margin: auto; cursor: pointer"
+              >
+                <thead class="table-primary">
+                  <tr>
+                    <th colspan="3" class="text-center fs-5">
+                      <i class="bi bi-cloud-sun"></i> Estado del Tiempo
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="text-center" rowspan="4" style="width: 110px">
+                      <img
+                        id="tiempoIcon"
+                        alt="No Existe Icono"
+                        style="width: 80px; height: 80px"
+                      />
+                    </td>
+                    <td class="fw-bold"><i class="bi bi-geo-alt"></i> Lugar</td>
+                    <td><p id="lug" class="mb-0">No Data</p></td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">
+                      <i class="bi bi-thermometer-half"></i> Temperatura
+                    </td>
+                    <td><p id="tem" class="mb-0">No Data</p></td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">
+                      <i class="bi bi-droplet-half"></i> Humedad
+                    </td>
+                    <td><p id="hum" class="mb-0">No Data</p></td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold"><i class="bi bi-wind"></i> Viento</td>
+                    <td><p id="vie" class="mb-0">No Data</p></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="text-center text-muted small mt-2">
+                Haz clic en la tabla para actualizar el clima
+              </div>
+            </div>
 
             <!-- ======= Fin de Datos de Propiedades ======= -->
           </div>
@@ -362,5 +408,91 @@
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
+
+    <!-- OpenWeatherMap Script -->
+    <script>
+      // Variables públicas para latitud y longitud
+      var lat = null;
+      var lon = null;
+
+      // Función para mostrar datos en la tabla
+      function mostrarClima(data) {
+        // Nombre del lugar
+        $("#lug").text(data.name || "No Data");
+        // Temperatura en °C
+        if (data.main && data.main.temp !== undefined) {
+          $("#tem").text((data.main.temp - 273.15).toFixed(1) + " °C");
+        } else {
+          $("#tem").text("No Data");
+        }
+        // Humedad
+        if (data.main && data.main.humidity !== undefined) {
+          $("#hum").text(data.main.humidity + " %");
+        } else {
+          $("#hum").text("No Data");
+        }
+        // Viento
+        if (data.wind && data.wind.speed !== undefined) {
+          $("#vie").text(data.wind.speed + " m/s");
+        } else {
+          $("#vie").text("No Data");
+        }
+        // Icono
+        if (data.weather && data.weather[0] && data.weather[0].icon) {
+          $("#tiempoIcon").attr(
+            "src",
+            "https://openweathermap.org/img/wn/" +
+              data.weather[0].icon +
+              "@2x.png"
+          );
+        } else {
+          $("#tiempoIcon").attr("src", "");
+        }
+      }
+
+      // Función para obtener clima usando lat/lon
+      function obtenerClima() {
+        if (lat === null || lon === null) {
+          $("#lug").text("Coordenadas no disponibles");
+          return;
+        }
+        var apiKey = "895c1d99f915ff93561f120a1ff900ad";
+        var url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+        $.getJSON(url)
+          .done(function (data) {
+            mostrarClima(data);
+          })
+          .fail(function () {
+            $("#lug").text("Error al obtener datos");
+            $("#tem").text("No Data");
+            $("#hum").text("No Data");
+            $("#vie").text("No Data");
+            $("#tiempoIcon").attr("src", "");
+          });
+      }
+
+      // Geolocalización al cargar la página
+      $(document).ready(function () {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function (position) {
+              lat = position.coords.latitude;
+              lon = position.coords.longitude;
+              obtenerClima();
+            },
+            function () {
+              $("#lug").text("Geolocalización denegada");
+            }
+          );
+        } else {
+          $("#lug").text("Geolocalización no soportada");
+        }
+
+        // Recargar clima al hacer clic en la tabla
+        $("#tblw").on("click", function () {
+          obtenerClima();
+        });
+      });
+    </script>
   </body>
 </html>
